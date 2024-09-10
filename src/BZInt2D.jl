@@ -71,15 +71,17 @@ end
 Recursive triangle method for weight function W(k) = W(k) = 1/D(k) Θ(eF-E(k))
 """
 function Quad2DRuleΘ𝔇(Emesh,eF,Dmesh,iter=2)
+    FloatType = typeof(float(Dmesh[1]))
     QTrigs = Mesh2QTrig(size(Emesh)...)
     EQTrigs = Emesh[QTrigs]
     DQTrigs = Dmesh[QTrigs]
-    WQTrigs = zeros(size(EQTrigs)...)
+    WQTrigs = zeros(FloatType, size(EQTrigs)...)
     @views @threads for i in 1:size(QTrigs,1)
         WQTrigs[i,:] = QuadTrigΘ𝔇(SVector{6}(EQTrigs[i,:]),eF,SVector{6}(DQTrigs[i,:]),iter)
     end
     
-    Wmesh = zeros(typeof(float(eF)),size(Emesh)...)
+#    Wmesh = zeros(typeof(float(eF)),size(Emesh)...)
+    Wmesh = zeros(typeof(float(Dmesh[1])),size(Emesh)...)
     @views for i in 1:size(QTrigs,1)
         Wmesh[QTrigs[i,:]] += WQTrigs[i,:]
     end
@@ -153,7 +155,7 @@ function Quad2DRuleΘΘ𝔇(X1mesh,X2mesh,Dmesh,iter=2)
         WQTrigs[i,:] = QuadTrigΘΘ𝔇(SVector{6}(X1QTrigs[i,:]),SVector{6}(X2QTrigs[i,:]),SVector{6}(DQTrigs[i,:]),iter)
     end
 
-    Wmesh = zeros(typeof(float(X1mesh[1])),size(X1mesh)...)
+    Wmesh = zeros(typeof(float(Dmesh[1])),size(X1mesh)...)
     @views for i in 1:size(QTrigs,1)
         Wmesh[QTrigs[i,:]] += WQTrigs[i,:]
     end

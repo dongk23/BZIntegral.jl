@@ -112,7 +112,8 @@ QuadTrigΘδ(X1qtrig,X2qtrig,iter) = QuadTrigΘδ(-X1qtrig,zero(X1qtrig[1]),X2qt
 Recursive triangle rule in a single quadratic triangle, weight function is W(k) = Θ(eF-E(k))⋅1/D(k)
 """
 function QuadTrigΘ𝔇(Eqtrig,eF,Dqtrig,iter)
-    FloatType = typeof(float(eF))
+#    FloatType = typeof(float(eF))
+    FloatType = typeof(float(Dqtrig[1]))
     dmax = maximum(real(Dqtrig))
     dmin = minimum(real(Dqtrig))
     if dmax*dmin>0 && isapprox(dmax,dmin,rtol = 0.25)

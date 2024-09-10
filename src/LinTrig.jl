@@ -325,7 +325,8 @@ end
 Linear triangle rule in a single triangle, weight function is W(k) = Θ(eF-E(k))⋅ 1/D(k).
 """
 function LinTrigΘ𝔇(Eraw,eF,Dnom)
-    FloatType = typeof(float(eF))
+#    FloatType = typeof(float(eF))
+    FloatType = typeof(float(Dnom[1]))
     ind = SVector{3}(sortperm(Eraw))
     E=float(Eraw[ind])
     D=float(Dnom[ind])
@@ -342,7 +343,7 @@ function LinTrigΘ𝔇(Eraw,eF,Dnom)
             w= LinTrig𝔇(D)-vol2* transpose(l2)*LinTrig𝔇((l2*D))
         end 
     else
-        FloatType = typeof(float(Dnom))
+        FloatType = typeof(float(Dnom[1]))
         if E[1]>=eF
             w = @SArray zeros(FloatType,3)
         elseif E[3]<eF

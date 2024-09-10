@@ -31,7 +31,8 @@ Recursive triangle rule in a single quadratic triangle, weight function is W(k) 
 Θ(x1)*Θ(x2) = (Θ(x1)+Θ(x2)-Θ(-x1*x2))/2
 """
 function QuadTrigΘΘ𝔇(X1qtrig,X2qtrig,Dqtrig,iter=2)
-    FloatType = typeof(float(X1qtrig[1]))
+#    FloatType = typeof(float(X1qtrig[1]))
+    FloatType = typeof(float(Dqtrig[1]))
     if iter==0
         if minimum(X1qtrig)>0 && minimum(X2qtrig)>0
             qw = QuadTrigΘ𝔇((@SArray zeros(FloatType,6)),one(FloatType),Dqtrig,0)
