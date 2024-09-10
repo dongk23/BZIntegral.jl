@@ -113,8 +113,8 @@ Recursive triangle rule in a single quadratic triangle, weight function is W(k) 
 """
 function QuadTrigΘ𝔇(Eqtrig,eF,Dqtrig,iter)
     FloatType = typeof(float(eF))
-    dmax = maximum(Dqtrig)
-    dmin = minimum(Dqtrig)
+    dmax = maximum(real(Dqtrig))
+    dmin = minimum(real(Dqtrig))
     if dmax*dmin>0 && isapprox(dmax,dmin,rtol = 0.25)
         qw = QuadTrigΘ(Eqtrig,eF,iter) ./ Dqtrig
     else 

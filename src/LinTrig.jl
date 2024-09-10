@@ -168,8 +168,27 @@ function RawExp(x,y,z)
     return res
 end
 
+function CmplxRawExp(x,y,z)
+    if isapprox(real(x),real(y),rtol=1.0e-5)|isapprox(real(y),real(z),rtol=1.0e-5)
+    a=Complex{Double64}(x)
+    b=Complex{Double64}(y)
+    c=Complex{Double64}(z)
+    res = -(b/(2*(a - b)*(-b + c))) - (b^2*(-log(a) + log(b)))/(
+        2*(a - b)^2*(-b + c))
+    else
+        res = Complex{Double64}(CmplxRawExp_(x,y,z))
+    end
+    return res
+end
+
 function RawExp_(a,b,c)
     res = -(b/(2*(a - b)*(-b + c))) - (b^2*(-log(abs(a)) + log(abs(b))))/(
+        2*(a - b)^2*(-b + c))
+    return res
+end
+
+function CmplxRawExp_(a,b,c)
+    res = -(b/(2*(a - b)*(-b + c))) - (b^2*(-log(a) + log(b)))/(
         2*(a - b)^2*(-b + c))
     return res
 end
@@ -189,7 +208,19 @@ function ExpXeqY(x,y,z)
     return res
 end
 
-function ExpXeqY_(a,b,c)
+function CmplxExpXeqY(x,y,z)
+    if isapprox(real(y),real(z),rtol=1.0e-5)
+    # a=Double64(x)
+    b=Complex{Double64}(y)
+    c=Complex{Double64}(z)
+    res = 1/(4*b - 4*c)
+    else
+        res = Complex{Double64}(ExpXeqY_(x,y,z))
+    end
+    return res
+end
+
+function ExpXeqY_(a,b,c) #same for complex and real variables
     res = 1/(4*b - 4*c)
     return res
 end
@@ -209,8 +240,25 @@ function ExpYeqZ(x,y,z)
     return res
 end
 
+function CmplxExpYeqZ(x,y,z)
+    if isapprox(real(x),real(y),rtol=1.0e-5)
+    a=Complex{Double64}(x)
+    # b=Double64(y)
+    c=Complex{Double64}(z)
+    res = (a^2 - c^2 - 2*a*c*(log(a)-log(c)))/(2*(a - c)^3)
+    else
+        res = Complex{Double64}(CmplxExpYeqZ_(x,y,z))
+    end
+    return res
+end
+
 function ExpYeqZ_(a,b,c)
     res = (a^2 - c^2 - 2*a*c*(log(abs(a))-log(abs(c))))/(2*(a - c)^3)
+    return res
+end
+
+function CmplxExpYeqZ_(a,b,c)
+    res = (a^2 - c^2 - 2*a*c*(log(a)-log(c)))/(2*(a - c)^3)
     return res
 end
 
@@ -239,11 +287,38 @@ function FracTrigWeight(x,y,z)
     return typeof(float(x))(res)
 end
 
+function CmplxFracTrigWeight(x,y,z)
+    realyz = @SArray [real(y),real(z)]
+    yz = @SArray [y,z]
+    ind = SVector{2}(sortperm(realyz))
+    v = @SArray [x,yz[ind[1]],yz[ind[2]]]
+    # v = [x,y,z]
+    # sort!(view(v,2:3))
+    if isapprox(real(v[1]),real(v[2]),rtol=1.0e-8)
+        if isapprox(real(v[2]),real(v[3]),rtol=1.0e-8) # 1==2==3
+            res = 1/v[1]/6
+        else # 1==2/=3
+            res = CmplxExpXeqY(v[1],v[2],v[3])+CmplxRawExp(v[1],v[3],v[2]) 
+        end
+    elseif isapprox(real(v[1]),real(v[3]),rtol=1.0e-8) # 1==3/=2
+        res = CmplxExpXeqY(v[1],v[3],v[2])+CmplxRawExp(v[1],v[2],v[3])
+    elseif isapprox(real(v[2]),real(v[3]),rtol=1.0e-8) 
+        res = CmplxExpYeqZ(v[1],v[2],v[3]) #1/=2==3
+    else # 1/=2/=3
+        res = CmplxRawExp(v[1],v[2],v[3])+CmplxRawExp(v[1],v[3],v[2])
+    end  
+    return typeof(float(x))(res)
+end
+
 """
 Linear triangle rule in a single triangle, weight function is W(k) = 1/𝔇(k).
 """
 function LinTrig𝔇(𝔇)
     return (@SArray [FracTrigWeight(𝔇[1],𝔇[2],𝔇[3]),FracTrigWeight(𝔇[2],𝔇[3],𝔇[1]),FracTrigWeight(𝔇[3],𝔇[1],𝔇[2])]) 
+end
+
+function CmplxLinTrig𝔇(𝔇)
+    return (@SArray [CmplxFracTrigWeight(𝔇[1],𝔇[2],𝔇[3]),CmplxFracTrigWeight(𝔇[2],𝔇[3],𝔇[1]),CmplxFracTrigWeight(𝔇[3],𝔇[1],𝔇[2])]) 
 end
 
 """
@@ -254,17 +329,32 @@ function LinTrigΘ𝔇(Eraw,eF,Dnom)
     ind = SVector{3}(sortperm(Eraw))
     E=float(Eraw[ind])
     D=float(Dnom[ind])
-    if E[1]>=eF
-        w = @SArray zeros(FloatType,3)
-    elseif E[3]<eF
-        w = LinTrig𝔇(D)
-    elseif E[1] <eF <=E[2]
-        l1,vol1 = subtrig1(E,eF)
-        w = vol1* transpose(l1)*LinTrig𝔇((l1*D))
-    elseif E[2] <eF <=E[3]
-        l2,vol2 = subtrig2(E,eF)
-        w= LinTrig𝔇(D)-vol2* transpose(l2)*LinTrig𝔇((l2*D))
-    end 
+    if isreal(Dnom)
+        if E[1]>=eF
+            w = @SArray zeros(FloatType,3)
+        elseif E[3]<eF
+            w = LinTrig𝔇(D)
+        elseif E[1] <eF <=E[2]
+            l1,vol1 = subtrig1(E,eF)
+            w = vol1* transpose(l1)*LinTrig𝔇((l1*D))
+        elseif E[2] <eF <=E[3]
+            l2,vol2 = subtrig2(E,eF)
+            w= LinTrig𝔇(D)-vol2* transpose(l2)*LinTrig𝔇((l2*D))
+        end 
+    else
+        FloatType = typeof(float(Dnom))
+        if E[1]>=eF
+            w = @SArray zeros(FloatType,3)
+        elseif E[3]<eF
+            w = CmplxLinTrig𝔇(D)
+        elseif E[1] <eF <=E[2]
+            l1,vol1 = subtrig1(E,eF)
+            w = vol1* transpose(l1)*CmplxLinTrig𝔇((l1*D))
+        elseif E[2] <eF <=E[3]
+            l2,vol2 = subtrig2(E,eF)
+            w= CmplxLinTrig𝔇(D)-vol2* transpose(l2)*CmplxLinTrig𝔇((l2*D))
+        end 
+    end
     res = @MArray zeros(eltype(w),3)
     res[ind] = w
     # return w[invperm(ind)]
