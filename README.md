@@ -22,7 +22,7 @@ Currently three types of singular factors in <!-- $W(\mathbf{k})$ --> <img style
 At this point, the package has not been registered with General Registry, and can be installed by entering
 
 ```
-] add https://github.com/SelimLin/BZIntegral.jl
+] add https://github.com/dongk23/BZIntegral.jl
 ```
 
 in julia REPL.
